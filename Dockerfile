@@ -9,32 +9,16 @@ ENV DEBIAN_FRONTEND=noninteractive \
     VNC_RESOLUTION=1024x768 \
     HOME=/root
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    fluxbox \
-    xterm \
-    x11vnc \
-    xvfb \
-    xrdp \
-    xorgxrdp \
-    novnc \
-    websockify \
-    firefox-esr \
-    thunar \
-    mousepad \
-    dbus-x11 \
-    sudo \
-    wget \
-    curl \
-    git \
-    htop \
-    nano \
-    net-tools \
-    procps \
-    locales \
-    && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen \
-    && locale-gen \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+RUN echo "deb http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware" > /etc/apt/sources.list.d/debian.sources \
+    && echo "deb http://deb.debian.org/debian bookworm-updates main contrib non-free non-free-firmware" >> /etc/apt/sources.list.d/debian.sources \
+    && apt-get update -o Acquire::Retries=3 \
+    && apt-get install -y --no-install-recommends --no-install-suggests \
+    fluxbox xterm x11vnc xvfb xrdp xorgxrdp \
+    novnc websockify \
+    firefox-esr thunar mousepad \
+    dbus-x11 sudo htop nano wget curl git net-tools procps locales \
+    && locale-gen en_US.UTF-8 \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh

@@ -1,93 +1,35 @@
-# Free RDP - Debian XFCE Desktop on Railway
+# Free RDP — Super Light Desktop on Railway
 
-A lightweight Debian XFCE desktop you can access from any browser or RDP client, hosted on Railway.
+Zero-config deploy. Just connect and use.
 
-## What's Included
+## What You Get
+- **fluxbox** window manager (tiny, fast)
+- **Firefox ESR** (browser)
+- **Thunar** (file manager)
+- **xterm / mousepad** (terminal & editor)
+- **RDP access** (Windows Remote Desktop, Remmina)
+- **Browser access** (noVNC — works on phone too)
+- Auto-generated password — no setup needed
 
-- **Debian bookworm-slim** base (minimal footprint)
-- **XFCE4** lightweight desktop environment
-- **xrdp** — connect with any RDP client (Windows Remote Desktop, Microsoft RDP, Remmina, etc.)
-- **noVNC** — access the desktop directly in your browser
-- **VNC server** — for VNC client connections
+## Deploy
 
-## Ports
+1. Push this repo to GitHub
+2. Railway → New Project → Deploy from GitHub Repo
+3. **Done.** No variables, no config needed.
 
-| Service | Port | Description |
-|---------|------|-------------|
-| xrdp    | 3389 | RDP client connections |
-| noVNC   | 8080 | Browser-based desktop access |
-| VNC     | 5901 | Direct VNC connections |
+## Access
 
-## Deploy to Railway
+### Browser (noVNC)
+Add a **TCP Proxy** → port `8080` → open the URL → click Connect
 
-### Step 1: Push to GitHub
+### RDP Client
+Add a **TCP Proxy** → port `3389` → connect with any RDP app
 
-```bash
-git init
-git add .
-git commit -m "Initial commit"
-git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO.git
-git push -u origin main
-```
+**Find your password:** Railway → your service → **Deploy Logs** → look for `Password: xxxxxxxxxx`
 
-### Step 2: Create Railway Project
-
-1. Go to [railway.app](https://railway.app)
-2. Click **New Project** → **Deploy from GitHub Repo**
-3. Select your repository
-
-### Step 3: Set Environment Variables
-
-In the Railway dashboard, go to your service → **Variables** tab and add:
-
-| Variable | Required | Example | Description |
-|----------|----------|---------|-------------|
-| `RDP_PASSWORD` | Yes | `MyStr0ngP@ss` | Desktop login password (min 8 chars) |
-| `RDP_USER` | No | `user` | Linux username (default: `user`) |
-| `VNC_RESOLUTION` | No | `1920x1080` | Screen resolution (default: `1280x720`) |
-
-### Step 4: Add TCP Proxy
-
-1. Go to **Settings** → **Networking**
-2. Add a **TCP Proxy** targeting internal port `3389`
-3. Note the hostname and port shown (e.g., `roundhouse.proxy.rlwy.net:25341`)
-
-### Step 5: Add noVNC Proxy (Browser Access)
-
-1. Add another **TCP Proxy** targeting internal port `8080`
-2. Use the generated URL to access the desktop in your browser
-
-## Connect
-
-### Via RDP Client (Recommended)
-
-1. Open your RDP client (Remote Desktop, Remmina, etc.)
-2. Enter the Railway TCP Proxy address: `hostname.proxy.rlwy.net:port`
-3. Login with your username and password
-
-### Via Browser (noVNC)
-
-1. Open the noVNC TCP Proxy URL in your browser
-2. Click **Connect**
-3. Enter the VNC password
-
-## Local Testing
+## Local Test
 
 ```bash
 docker build -t free-rdp .
-docker run --rm -p 3389:3389 -p 8080:8080 \
-  -e RDP_PASSWORD='TestPass123' \
-  free-rdp
+docker run --rm -p 3389:3389 -p 8080:8080 free-rdp
 ```
-
-Then connect to `localhost:3389` with your RDP client, or open `http://localhost:8080` in your browser.
-
-## Persistent Storage
-
-To keep files between redeployments, add a **Railway Volume** mounted at `/home/user` (or your custom `RDP_USER` home directory).
-
-## Tips
-
-- Use a strong random password — anyone with the TCP Proxy address can reach the login screen
-- Minimum recommended: 1 vCPU + 2 GB RAM
-- The RDP certificate is self-signed — accept the warning if the hostname matches your Railway TCP Proxy

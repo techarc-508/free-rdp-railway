@@ -6,10 +6,8 @@ RDP_USER="${RDP_USER:-user}"
 
 echo "=== Setting up user: ${RDP_USER} ==="
 
-# Set root password
 echo "root:${RDP_PASSWORD}" | chpasswd
 
-# Create user if not exists
 if ! id "$RDP_USER" &>/dev/null; then
     useradd -m -s /bin/bash "$RDP_USER"
 fi
@@ -27,25 +25,39 @@ exec /bin/sh /etc/X11/Xsession
 WMEOF
 chmod 755 /etc/xrdp/startwm.sh
 
-# Create .xsession for the user
 echo "xfce4-session" > /home/${RDP_USER}/.xsession
 chown ${RDP_USER}:${RDP_USER} /home/${RDP_USER}/.xsession
 
 echo "=== Starting services ==="
 
-# Start Xvfb (virtual display)
-Xvfb :1 -screen 0 ${VNC_RESOLUTION}x24 &
+# Virtual display
+Xvfb :1 -screen 0 ${VNC_RESOLUTION}x24 -ac +extension GLX +render -noreset &
 sleep 2
 
-# Start x11vnc (VNC server on the virtual display)
-x11vnc -display :1 -forever -shared -rfbport ${VNC_PORT} -nopw -xkb &
+# VNC with compression for speed
+x11vnc -display :1 -forever -shared -rfbport ${VNC_PORT} \
+    -nopw -xkb -ncache 10 -ncache_cr -bgr2rgb \
+    -quality 60 -noxdamage &
 sleep 1
 
-# Start xrdp
+# xrdp
 service xrdp start &
 
-# Start noVNC (browser access)
-cd /usr/share/novnc
+# noVNC - find correct path
+NOVNC_PATH=""
+for p in /usr/share/novnc /usr/share/novnc/utils; do
+    if [ -f "$p/vnc.html" ] || [ -f "$p/vnc_lite.html" ]; then
+        NOVNC_PATH="$p"
+        break
+    fi
+done
+
+if [ -z "$NOVNC_PATH" ]; then
+    NOVNC_PATH="/usr/share/novnc"
+fi
+
+echo "noVNC path: $NOVNC_PATH"
+cd "$NOVNC_PATH"
 websockify --web . ${NO_VNC_PORT} localhost:${VNC_PORT} &
 
 echo "=== All services started ==="
@@ -54,5 +66,4 @@ echo "noVNC (browser): port ${NO_VNC_PORT}"
 echo "User:     ${RDP_USER}"
 echo "Password: ${RDP_PASSWORD}"
 
-# Keep container alive
 tail -f /dev/null

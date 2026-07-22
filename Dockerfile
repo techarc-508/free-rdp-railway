@@ -6,12 +6,14 @@ ENV DEBIAN_FRONTEND=noninteractive \
     VNC_PORT=5901 \
     NO_VNC_PORT=8080 \
     RDP_PORT=3389 \
-    VNC_RESOLUTION=1280x720
+    VNC_RESOLUTION=1024x768
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    xfce4 \
+    xfce4-session \
     xfce4-terminal \
-    xfce4-goodies \
+    xfce4-panel \
+    xfwm4 \
+    xfdesktop4 \
     xrdp \
     xorgxrdp \
     xvfb \
@@ -20,10 +22,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     websockify \
     dbus-x11 \
     sudo \
-    htop \
-    nano \
-    net-tools \
-    procps \
     locales \
     && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen \
     && locale-gen \

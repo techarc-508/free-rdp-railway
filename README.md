@@ -1,35 +1,46 @@
-# Free RDP — Super Light Desktop on Railway
+# Free RDP — Ultra Light Desktop + Bore Tunnel
 
-Zero-config deploy. Just connect and use.
+Zero-config deploy. Works on phone too.
 
 ## What You Get
 - **fluxbox** window manager (tiny, fast)
-- **Firefox ESR** (browser)
-- **Thunar** (file manager)
-- **xterm / mousepad** (terminal & editor)
-- **RDP access** (Windows Remote Desktop, Remmina)
-- **Browser access** (noVNC — works on phone too)
-- Auto-generated password — no setup needed
+- **Firefox ESR** not included (add later via terminal to save space)
+- **xterm** terminal
+- **Bore tunnel** — public URL for browser access (no Railway TCP proxy needed)
+- **RDP access** — for Windows Remote Desktop
+- **Auto password** — check deploy logs
 
 ## Deploy
 
-1. Push this repo to GitHub
+1. Push repo to GitHub
 2. Railway → New Project → Deploy from GitHub Repo
-3. **Done.** No variables, no config needed.
+3. Done. No config needed.
 
 ## Access
 
-### Browser (noVNC)
-Add a **TCP Proxy** → port `8080` → open the URL → click Connect
+### Browser (Recommended)
+Check **Deploy Logs** for the bore URL:
+```
+Bore: bore.pub:XXXXX
+```
+Open `http://bore.pub:XXXXX` in any browser.
 
 ### RDP Client
-Add a **TCP Proxy** → port `3389` → connect with any RDP app
+Add TCP Proxy → port `3389`
 
-**Find your password:** Railway → your service → **Deploy Logs** → look for `Password: xxxxxxxxxx`
+## Install Apps After Deploy
+Open terminal in the desktop:
+```bash
+sudo apt update && sudo apt install -y firefox-esr thunar mousepad nano htop wget curl git
+```
+
+## Resource Usage
+- Fluxbox: ~30MB RAM idle
+- Total: ~80-120MB RAM
+- $5 trial lasts ~20-25 days at this usage
 
 ## Local Test
-
 ```bash
 docker build -t free-rdp .
-docker run --rm -p 3389:3389 -p 8080:8080 free-rdp
+docker run --rm -p 8080:8080 -p 3389:3389 free-rdp
 ```

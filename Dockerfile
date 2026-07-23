@@ -9,21 +9,28 @@ ENV DEBIAN_FRONTEND=noninteractive \
     VNC_RESOLUTION=1024x768 \
     HOME=/root
 
+# Install bore first (static binary, no deps)
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl ca-certificates \
+    && BORE_VERSION=$(curl -s https://api.github.com/repos/ekzhang/bore/releases/latest | grep tag_name | cut -d '"' -f4) \
+    && curl -sL "https://github.com/ekzhang/bore/releases/download/${BORE_VERSION}/bore-${BORE_VERSION}-x86_64-unknown-linux-musl.tar.gz" \
+    | tar xz -C /usr/local/bin \
+    && chmod +x /usr/local/bin/bore \
+    && apt-get purge -y curl ca-certificates \
+    && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install desktop + VNC + noVNC
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-    locales \
-    && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen \
-    && locale-gen \
-    && apt-get install -y --no-install-recommends \
-    fluxbox xterm x11vnc xvfb xrdp xorgxrdp \
-    novnc websockify \
-    firefox-esr thunar mousepad \
-    dbus-x11 sudo htop nano wget curl git net-tools procps \
+    fluxbox xterm x11vnc xvfb novnc websockify \
+    dbus-x11 sudo htop wget procps locales \
+    && locale-gen en_US.UTF-8 \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-EXPOSE 3389 8080
+EXPOSE 8080 3389
 
 ENTRYPOINT ["/entrypoint.sh"]

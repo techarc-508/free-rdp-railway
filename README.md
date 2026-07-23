@@ -1,68 +1,70 @@
-# Free RDP — NoMachine + Bore Tunnel on Railway
+# Free RDP — Access Your Local VM from Anywhere
 
-Two Railway services working together for free remote desktop access from anywhere.
+Expose your local Linux Mint VM to the internet via Railway + bore tunnel.
+Connect with NoMachine from any network.
 
-## Architecture
+## How It Works
 
 ```
-NoMachine Client → Railway TCP Proxy → bore server → Railway private network → desktop VM
+[NoMachine Client (phone/anywhere)]
+    → [Railway TCP Proxy]
+        → [bore server on Railway]
+            → [bore tunnel to your VM]
+                → [NoMachine on your Linux Mint VM]
+                    → [Your desktop]
 ```
 
-## Deploy (2 Services)
+## Setup (3 Steps)
 
-### Step 1: Deploy Bore Server (tiny, ~5MB)
+### Step 1: Deploy Bore Server on Railway
 
-1. Railway → New Project → Deploy from GitHub Repo → same repo
-2. Open service → **Settings → Build**
-3. Set **Dockerfile Path** to: `bore-server/Dockerfile`
-4. Service will auto-restart. Done. Note its **private hostname** (e.g., `bore-server.up.railway.app`)
+1. Push this repo to GitHub
+2. Railway → New Project → Deploy from GitHub Repo
+3. Open service → **Settings → Build**
+4. Set **Dockerfile Path** to: `bore-server/Dockerfile`
+5. Wait for deploy. Note the service name (e.g., `bore-server`)
 
-### Step 2: Deploy Desktop VM
+### Step 2: Install Bore Client on Your VM
 
-1. Same Railway project → New Service → Deploy from GitHub Repo → same repo
-2. Open service → **Variables** tab, add:
-   - `RDP_PASSWORD` = any password
-   - `BORE_SERVER` = `<bore-server-service-name>.railway.internal` (the private network address)
-   - `BORE_SECRET` = `railwayfree2026` (same as bore server)
-3. **Settings → Networking → TCP Proxy** → port `8080` (for browser/noVNC backup)
+Run on your Linux Mint VM:
+```bash
+bash setup-bore-client.sh
+```
 
-### Step 3: Connect with NoMachine
-
-1. Open **Deploy Logs** of the desktop service
-2. Find the line:
-   ```
-   bore: listening at bore-server.railway.internal:XXXXX
-   ```
-3. Add a **TCP Proxy** on the **bore-server** service → port `7835`
-4. In NoMachine client:
-   ```
-   Host: <bore-server>.proxy.rlwy.net
-   Port: <assigned port>
-   Protocol: NX
-   User: user
-   Password: <your RDP_PASSWORD>
-   ```
-
-## Access from Anywhere
-
-| Method | How |
-|--------|-----|
-| **NoMachine client** | Connect via bore tunnel (above) |
-| **Browser** | Open port 8080 TCP Proxy URL → noVNC |
-
-## Cost
-
-- Bore server: ~1MB RAM → nearly free
-- Desktop VM: ~100MB RAM → $5 lasts ~25 days
-- Both communicate via Railway private network → no egress charges
-
-## Local Test
+### Step 3: Start the Tunnel
 
 ```bash
-# Terminal 1: bore server
-docker run --rm -p 7835:7835 bore-server
-
-# Terminal 2: desktop
-docker build -t free-rdp .
-docker run --rm -e BORE_SERVER=host.docker.internal -p 8080:8080 free-rdp
+bore local 4000 --to bore-server.railway.internal:7835 --secret railwayfree2026
 ```
+
+Replace `bore-server.railway.internal` with your bore server's Railway private address.
+
+### Step 4: Connect from Anywhere
+
+1. Railway bore-server → **Settings → Networking → TCP Proxy** → port `7835`
+2. Note the TCP Proxy hostname and port
+3. NoMachine client:
+   ```
+   Host: <bore-server>.proxy.rlwy.net
+   Port: <TCP proxy port>
+   Protocol: NX
+   User: your Linux username
+   Password: your Linux password
+   ```
+
+## Your VM Info
+
+| Item | Value |
+|------|-------|
+| OS | Linux Mint 22.3 (Zena) |
+| IP | 192.168.0.200 |
+| NoMachine | 9.8.2 (running) |
+| NoMachine Port | 4000 |
+| Display Manager | LightDM |
+
+## Files
+
+| File | Purpose |
+|------|---------|
+| `bore-server/Dockerfile` | Bore relay server (deploy on Railway) |
+| `setup-bore-client.sh` | Install bore client (run on your VM) |
